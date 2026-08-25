@@ -46,7 +46,7 @@ export default function UploadDocumentPage() {
         .from('land-records')
         .upload(filePath, file)
 
-      if (uploadError) throw uploadError
+      if (uploadError) throw new Error(`Storage Error: ${uploadError.message} (Are your Storage RLS policies set?)`)
 
       setProgress(70)
 
@@ -68,7 +68,7 @@ export default function UploadDocumentPage() {
         .select()
         .single()
 
-      if (dbError) throw dbError
+      if (dbError) throw new Error(`DB Error: ${dbError.message} | Details: ${dbError.details || dbError.hint || ''}`)
 
       setProgress(100)
       
