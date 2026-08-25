@@ -22,14 +22,14 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      // Mock Authentication for Hackathon Demo
-      if (email === 'officer@india.gov.in' && password === 'password123') {
-        // Set a mock session in local storage
-        localStorage.setItem('sih_auth_session', 'authenticated')
-        router.push('/dashboard')
-      } else {
-        throw new Error('Invalid login credentials')
-      }
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) throw error
+
+      router.push('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Failed to login')
     } finally {

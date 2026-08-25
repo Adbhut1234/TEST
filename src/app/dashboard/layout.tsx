@@ -15,12 +15,24 @@ export default function DashboardLayout({
   const router = useRouter()
 
   useEffect(() => {
-    const session = localStorage.getItem('sih_auth_session')
-    if (session !== 'authenticated') {
-      router.push('/login')
-    } else {
-      setLoading(false)
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login')
+      } else {
+        setLoading(false)
+      }
     }
+    
+    checkAuth()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        router.push('/login')
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [router])
 
   if (loading) {
@@ -41,10 +53,7 @@ export default function DashboardLayout({
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
           <div className="ml-auto flex items-center space-x-4">
             <button 
-              onClick={() => {
-                localStorage.removeItem('sih_auth_session')
-                router.push('/login')
-              }} 
+              onClick={() => supabase.auth.signOut()} 
               className="text-sm font-medium text-muted-foreground hover:text-foreground"
             >
               Sign Out

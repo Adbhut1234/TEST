@@ -35,6 +35,7 @@ export default function DocumentsList() {
         const { data, error } = await supabase
           .from('documents')
           .select('*')
+          .is('deleted_at', null)
           .order('uploaded_at', { ascending: false })
 
         if (error) throw error
@@ -59,7 +60,7 @@ export default function DocumentsList() {
     try {
       const { error } = await supabase
         .from('documents')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', id)
 
       if (error) throw error

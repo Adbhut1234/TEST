@@ -26,10 +26,10 @@ export default function DashboardOverview() {
 
         if (error) throw error
 
-        let total = data.length
-        let verified = data.filter((d) => d.processing_status === 'VERIFIED').length
-        let reviewRequired = data.filter((d) => d.processing_status === 'REVIEW_REQUIRED').length
-        let failed = data.filter((d) => d.processing_status === 'FAILED').length
+        const total = data.length
+        const verified = data.filter((d) => d.processing_status === 'VERIFIED').length
+        const reviewRequired = data.filter((d) => d.processing_status === 'REVIEW_REQUIRED').length
+        const failed = data.filter((d) => d.processing_status === 'FAILED').length
 
         setStats({ total, verified, reviewRequired, failed })
       } catch (err) {

@@ -15,6 +15,16 @@ async function run() {
   if (error) {
     console.error("Error creating user:", error.message)
   } else {
+    // Insert into profiles for RLS testing
+    if (data.user) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        name: 'Test Officer',
+        email: 'officer@india.gov.in',
+        role: 'VERIFICATION_OFFICER'
+      })
+    }
+    
     console.log("User created successfully!")
     console.log("Email:", 'officer@india.gov.in')
     console.log("Password:", 'password123')

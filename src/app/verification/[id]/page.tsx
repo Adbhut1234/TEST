@@ -64,11 +64,12 @@ export default function VerificationPage() {
 
         if (recordData) {
           setRecord(recordData)
+          const dataToUse = recordData.verified_data || recordData.extracted_data || {}
           setFormData({
-            owner_name: recordData.verified_data?.owner_name || '',
-            khasra_number: recordData.verified_data?.khasra_number || '',
-            land_area: recordData.verified_data?.land_area || '',
-            village: recordData.verified_data?.village || ''
+            owner_name: dataToUse.owner_name || '',
+            khasra_number: dataToUse.khasra_number || '',
+            land_area: dataToUse.land_area || '',
+            village: dataToUse.village || ''
           })
         }
       } catch (error) {
@@ -86,6 +87,38 @@ export default function VerificationPage() {
     setSaving(true)
 
     try {
+      // Get current user for audit logs
+      const { data: { session } } = await supabase.auth.getSession()
+      const actorId = session?.user?.id
+
+      const auditEvents = []
+      const oldData = record.verified_data || record.extracted_data || {}
+      
+      // Check each field for corrections
+      const fields = ['owner_name', 'khasra_number', 'land_area', 'village']
+      for (const field of fields) {
+        if (oldData[field] !== formData[field]) {
+          auditEvents.push({
+            land_record_id: record.id,
+            actor_id: actorId,
+            field_name: field,
+            old_value: oldData[field] || '',
+            new_value: formData[field] || '',
+            action: 'CORRECTION'
+          })
+        }
+      }
+
+      // Add APPROVE action
+      auditEvents.push({
+        land_record_id: record.id,
+        actor_id: actorId,
+        field_name: 'is_verified',
+        old_value: 'false',
+        new_value: 'true',
+        action: 'APPROVE'
+      })
+
       // Update land_records
       const { error: recordError } = await supabase
         .from('land_records')
@@ -97,6 +130,12 @@ export default function VerificationPage() {
         .eq('id', record.id)
 
       if (recordError) throw recordError
+
+      // Insert audit events
+      if (auditEvents.length > 0) {
+        const { error: auditError } = await supabase.from('audit_events').insert(auditEvents)
+        if (auditError) console.error('Failed to save audit events', auditError)
+      }
 
       // Update documents
       const { error: docError } = await supabase
@@ -123,9 +162,23 @@ export default function VerificationPage() {
     
     setDeleting(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const actorId = session?.user?.id
+
+      if (record) {
+        await supabase.from('audit_events').insert([{
+          land_record_id: record.id,
+          actor_id: actorId,
+          field_name: 'document',
+          action: 'DELETE'
+        }])
+        
+        await supabase.from('land_records').update({ deleted_at: new Date().toISOString() }).eq('id', record.id)
+      }
+
       const { error } = await supabase
         .from('documents')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', documentId)
 
       if (error) throw error

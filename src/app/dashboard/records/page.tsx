@@ -36,6 +36,7 @@ export default function VerifiedRecordsList() {
           .from('land_records')
           .select('*')
           .eq('is_verified', true)
+          .is('deleted_at', null)
           .order('updated_at', { ascending: false })
 
         if (error) throw error

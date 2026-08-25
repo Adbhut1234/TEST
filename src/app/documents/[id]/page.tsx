@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { AlertCircle, BrainCircuit, CheckCircle2 } from 'lucide-react'
@@ -26,9 +27,15 @@ export default function DocumentProcessingPage() {
       setError(null)
 
       try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const token = session?.access_token
+
         const res = await fetch('/api/process', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ documentId })
         })
 
