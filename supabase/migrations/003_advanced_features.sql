@@ -12,10 +12,16 @@ create table public.mock_lrms_records (
   plot_area text
 );
 
+alter table public.mock_lrms_records enable row level security;
+create policy "Authenticated read mock_lrms" on public.mock_lrms_records for select using (auth.role() = 'authenticated');
+
 -- Insert some mock records for testing validation engine
-insert into public.mock_lrms_records (owner_name, khasra_number, khata_number, village, tehsil, district, plot_area) values
-('Ramesh Kumar', '128/2', '45A', 'Bhatagaon', 'Raipur', 'Raipur', '1.25'),
-('Suresh Verma', '999', '12B', 'Gokulpur', 'Bhopal', 'Bhopal', '5.00');
+insert into public.mock_lrms_records (owner_name, khasra_number, khata_number, village, tehsil, district, plot_area) 
+select * from (values 
+  ('Ramesh Kumar', '128/2', '45A', 'Bhatagaon', 'Raipur', 'Raipur', '1.25'),
+  ('Suresh Verma', '999', '12B', 'Gokulpur', 'Bhopal', 'Bhopal', '5.00')
+) as v(owner_name, khasra_number, khata_number, village, tehsil, district, plot_area)
+where not exists (select 1 from public.mock_lrms_records);
 
 -- 2. Prevent duplicate land_records per document (Risk 1 Fix)
 alter table public.land_records add constraint unique_document_id unique(document_id);

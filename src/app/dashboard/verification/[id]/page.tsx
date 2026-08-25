@@ -333,6 +333,7 @@ export default function VerificationPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {Object.keys(fieldLabels).map((key) => {
                   const confidence = record?.extracted_data?.[key]?.confidence
+                  const rawValue = record?.extracted_data?.[key]?.raw_value
                   let borderColor = ""
                   if (!record?.is_verified && confidence !== undefined) {
                     if (confidence > 0.85) borderColor = "border-green-500 focus-visible:ring-green-500"
@@ -341,7 +342,7 @@ export default function VerificationPage() {
                   }
 
                   return (
-                    <div key={key} className="space-y-2">
+                    <div key={key} className="space-y-1.5">
                       <Label htmlFor={key} className="flex justify-between items-center text-xs font-medium">
                         {fieldLabels[key]}
                         {!record?.is_verified && confidence !== undefined && (
@@ -362,6 +363,11 @@ export default function VerificationPage() {
                         className={borderColor}
                         placeholder={`Enter ${fieldLabels[key].toLowerCase()}`}
                       />
+                      {rawValue && (
+                        <p className="text-[11px] text-muted-foreground font-mono bg-muted/20 px-2 py-1 rounded-sm border border-dashed">
+                          <span className="font-semibold opacity-70">Original:</span> {rawValue}
+                        </p>
+                      )}
                     </div>
                   )
                 })}

@@ -49,7 +49,7 @@ export default function DocumentProcessingPage() {
 
         // Short delay to show success state before redirecting
         setTimeout(() => {
-          router.push(`/verification/${documentId}`)
+          router.push(`/dashboard/verification/${documentId}`)
         }, 1500)
 
       } catch (err: any) {

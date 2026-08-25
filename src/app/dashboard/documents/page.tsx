@@ -134,11 +134,11 @@ export default function DocumentsList() {
                   <TableCell>{getStatusBadge(doc.processing_status)}</TableCell>
                   <TableCell className="text-right flex items-center justify-end gap-2">
                     {doc.processing_status === 'REVIEW_REQUIRED' ? (
-                      <Link href={`/verification/${doc.id}`}>
+                      <Link href={`/dashboard/verification/${doc.id}`}>
                         <Button size="sm">Verify</Button>
                       </Link>
                     ) : (
-                      <Link href={`/documents/${doc.id}`}>
+                      <Link href={`/dashboard/documents/${doc.id}`}>
                         <Button size="sm" variant="outline">View</Button>
                       </Link>
                     )}

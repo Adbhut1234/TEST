@@ -51,6 +51,9 @@ export default function UploadDocumentPage() {
       setProgress(70)
 
       // 2. Insert metadata into documents table
+      const { data: { session } } = await supabase.auth.getSession()
+      const uploaderId = session?.user?.id
+
       const { data: docData, error: dbError } = await supabase
         .from('documents')
         .insert([
@@ -58,7 +61,8 @@ export default function UploadDocumentPage() {
             filename: file.name,
             storage_path: filePath,
             source_type: file.type,
-            processing_status: 'UPLOADED'
+            processing_status: 'UPLOADED',
+            uploaded_by: uploaderId
           }
         ])
         .select()
@@ -70,7 +74,7 @@ export default function UploadDocumentPage() {
       
       // 3. Redirect to processing page
       if (docData) {
-        router.push(`/documents/${docData.id}`)
+        router.push(`/dashboard/documents/${docData.id}`)
       }
     } catch (err: any) {
       console.error(err)
