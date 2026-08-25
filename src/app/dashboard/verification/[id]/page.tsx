@@ -300,8 +300,8 @@ export default function VerificationPage() {
           </CardHeader>
           <CardContent className="flex-1 p-0 bg-muted/10 relative">
             {fileUrl ? (
-              document.source_type?.includes('pdf') ? (
-                <iframe src={fileUrl} className="w-full h-full border-0" />
+              document.source_type?.includes('pdf') || document.source_type?.includes('text') ? (
+                <iframe src={fileUrl} className="w-full h-full border-0 bg-white" />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={fileUrl} alt="Land Record" className="w-full h-full object-contain" />
