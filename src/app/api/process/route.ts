@@ -122,7 +122,18 @@ If a field is unreadable, set its value to null. Do not invent information.`
         text = result.response.text()
         extractedData = JSON.parse(text)
         success = true
-      } catch (err) {
+      } catch (err: any) {
+        console.error(`Gemini Attempt ${attempt} Failed:`, err)
+
+        // Check for 429 rate limit specifically
+        if (err.message && err.message.includes('429') && err.message.includes('quota')) {
+          // Return immediately with a clean 429 error to the UI
+          return NextResponse.json(
+            { error: 'Google AI Free Tier Rate Limit Exceeded. Please wait 60 seconds before retrying.' },
+            { status: 429 }
+          )
+        }
+
         attempt++
         if (attempt >= maxRetries) {
           throw new Error(`Gemini API failed after ${maxRetries} attempts: ${err instanceof Error ? err.message : 'Unknown'}`)
