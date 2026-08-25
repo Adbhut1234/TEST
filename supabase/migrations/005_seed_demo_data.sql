@@ -20,7 +20,7 @@ begin
   -- 3. Insert Documents
   insert into public.documents (id, filename, storage_path, source_type, processing_status, uploaded_by)
   values 
-    ('a0000000-0000-0000-0000-000000000001', 'sample_land_record.txt', 'demo/rampur_sample', 'text/plain', 'VERIFIED', admin_id),
+    ('a0000000-0000-0000-0000-000000000001', 'lucknow_khasra_89.pdf', 'demo/1', 'application/pdf', 'VERIFIED', admin_id),
     ('a0000000-0000-0000-0000-000000000002', 'patna_scan_v2.jpg', 'demo/2', 'image/jpeg', 'REVIEW_REQUIRED', admin_id),
     ('a0000000-0000-0000-0000-000000000003', 'bhopal_legacy_record.png', 'demo/3', 'image/png', 'REVIEW_REQUIRED', admin_id),
     ('a0000000-0000-0000-0000-000000000004', 'raipur_plot_12.pdf', 'demo/4', 'application/pdf', 'VERIFIED', admin_id),
@@ -33,10 +33,10 @@ begin
     (
       'a0000000-0000-0000-0000-000000000001', 
       true, 
-      0.99, 
+      0.98, 
       '[]'::jsonb, 
-      '{"owner_name": {"value": "Rajesh Kumar Sharma", "confidence": 0.99}, "district": {"value": "Kangra", "confidence": 0.98}, "khasra_number": {"value": "452/1", "confidence": 0.99}, "plot_area": {"value": "1.5 Hectares", "confidence": 0.98}, "village": {"value": "Rampur", "confidence": 0.97}, "tehsil": {"value": "Palampur", "confidence": 0.96}}'::jsonb,
-      '{"owner_name": "Rajesh Kumar Sharma", "father_or_spouse_name": "Suresh Sharma", "khasra_number": "452/1", "plot_area": "1.5 Hectares", "district": "Kangra", "tehsil": "Palampur", "village": "Rampur", "registration_date": "12-05-2015"}'::jsonb
+      '{"owner_name": {"value": "Rajesh Sharma", "confidence": 0.99}, "district": {"value": "Lucknow", "confidence": 0.95}}'::jsonb,
+      '{"owner_name": "Rajesh Sharma", "khasra_number": "89", "plot_area": "1.2", "district": "Lucknow", "village": "Gomti Nagar"}'::jsonb
     ),
     (
       'a0000000-0000-0000-0000-000000000002', 
