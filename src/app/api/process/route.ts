@@ -80,22 +80,23 @@ export async function POST(req: Request) {
     const prompt = `You are an expert Indian Land Record extractor.
 Analyze the provided image of a land record.
 Extract the following fields and return ONLY a valid JSON object matching this schema.
-For each field, return an object with "value" (the extracted data) and "confidence" (a number between 0 and 1 representing your confidence in the extraction).
+If the document is in a regional language (like Hindi, Marathi, etc.), translate the extracted values to English for the "value" field, but keep the original script in the "raw_value" field.
+For each field, return an object with "value" (the English translated data), "raw_value" (the original script data), and "confidence" (a number between 0 and 1 representing your confidence in the extraction).
 {
   "raw_text_layer": "string",
-  "owner_name": { "value": "string or null", "confidence": 0.0 },
-  "father_or_spouse_name": { "value": "string or null", "confidence": 0.0 },
-  "khasra_number": { "value": "string or null", "confidence": 0.0 },
-  "khata_number": { "value": "string or null", "confidence": 0.0 },
-  "survey_number": { "value": "string or null", "confidence": 0.0 },
-  "plot_area": { "value": "string or null", "confidence": 0.0 },
-  "area_unit": { "value": "string or null", "confidence": 0.0 },
-  "village": { "value": "string or null", "confidence": 0.0 },
-  "tehsil": { "value": "string or null", "confidence": 0.0 },
-  "district": { "value": "string or null", "confidence": 0.0 },
-  "land_classification": { "value": "string or null", "confidence": 0.0 },
-  "mutation_number": { "value": "string or null", "confidence": 0.0 },
-  "registration_date": { "value": "string or null", "confidence": 0.0 }
+  "owner_name": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 },
+  "father_or_spouse_name": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 },
+  "khasra_number": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 },
+  "khata_number": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 },
+  "survey_number": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 },
+  "plot_area": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 },
+  "area_unit": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 },
+  "village": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 },
+  "tehsil": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 },
+  "district": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 },
+  "land_classification": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 },
+  "mutation_number": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 },
+  "registration_date": { "value": "string or null", "raw_value": "string or null", "confidence": 0.0 }
 }
 If a field is unreadable, set its value to null. Do not invent information.`
 
