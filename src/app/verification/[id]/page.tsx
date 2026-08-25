@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, CheckCircle2, Save, Trash2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Save, Trash2, AlertCircle, FileText } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -292,7 +292,7 @@ export default function VerificationPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-200px)] min-h-[600px]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-[600px]">
         {/* Original Document Preview */}
         <Card className="h-full flex flex-col overflow-hidden">
           <CardHeader className="py-4 border-b bg-muted/30">
@@ -370,6 +370,26 @@ export default function VerificationPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Raw OCR Layer Display */}
+      {record?.extracted_data?.raw_text_layer && (
+        <Card className="mt-8 border-indigo-100 dark:border-indigo-900/50">
+          <CardHeader className="py-4 border-b bg-indigo-50/50 dark:bg-indigo-950/20">
+            <CardTitle className="text-lg flex items-center">
+              <FileText className="w-5 h-5 mr-2 text-indigo-500" />
+              Raw OCR / Text Layer
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 bg-muted/10">
+            <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-mono bg-background p-4 rounded-md border">
+              {record.extracted_data.raw_text_layer}
+            </pre>
+            <p className="text-xs text-muted-foreground mt-4 italic">
+              * In the MVP, this layer is generated via Gemini Multimodal. The final architecture will integrate PaddleOCR/Tesseract for offline and open-source text extraction.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

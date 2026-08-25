@@ -82,6 +82,7 @@ Analyze the provided image of a land record.
 Extract the following fields and return ONLY a valid JSON object matching this schema.
 For each field, return an object with "value" (the extracted data) and "confidence" (a number between 0 and 1 representing your confidence in the extraction).
 {
+  "raw_text_layer": "string",
   "owner_name": { "value": "string or null", "confidence": 0.0 },
   "father_or_spouse_name": { "value": "string or null", "confidence": 0.0 },
   "khasra_number": { "value": "string or null", "confidence": 0.0 },
@@ -145,6 +146,45 @@ If a field is unreadable, set its value to null. Do not invent information.`
       confidenceScore -= 0.15
     }
 
+    // --- LRMS Mock Database Cross-Verification ---
+    if (kNumber && vName) {
+      const { data: lrmsRecord } = await userSupabase
+        .from('mock_lrms_records')
+        .select('*')
+        .eq('khasra_number', kNumber)
+        .eq('village', vName)
+        .maybeSingle()
+
+      if (lrmsRecord) {
+        // 1. Owner Name Fuzzy Match (simple match for MVP)
+        if (oName && lrmsRecord.owner_name && !lrmsRecord.owner_name.toLowerCase().includes(oName.toLowerCase().split(' ')[0])) {
+          validationFlags.push({
+            type: 'WARNING',
+            message: `Owner name mismatch. LRMS shows: ${lrmsRecord.owner_name}`
+          })
+          confidenceScore -= 0.1
+        }
+        
+        // 2. Area Mismatch
+        if (!isNaN(lArea) && lrmsRecord.plot_area) {
+          const lrmsArea = parseFloat(lrmsRecord.plot_area)
+          if (Math.abs(lArea - lrmsArea) > 0.05) {
+             validationFlags.push({
+               type: 'CRITICAL',
+               message: `Area mismatch. LRMS shows: ${lrmsRecord.plot_area}`
+             })
+             confidenceScore -= 0.2
+          }
+        }
+      } else {
+        validationFlags.push({
+          type: 'WARNING',
+          message: 'Khasra/Village not found in Government LRMS Database.'
+        })
+        confidenceScore -= 0.1
+      }
+    }
+
     // Duplicate detection (query land_records)
     if (kNumber && vName) {
       const { data: verifiedRecords } = await userSupabase
@@ -172,13 +212,13 @@ If a field is unreadable, set its value to null. Do not invent information.`
     // 4. Save to Land Records Table
     const { error: insertError } = await userSupabase
       .from('land_records')
-      .insert([{
+      .upsert([{
         document_id: documentId,
         extracted_data: extractedData,
         verified_data: null, // Initially null until human review
         validation_flags: validationFlags,
         confidence_score: confidenceScore
-      }])
+      }], { onConflict: 'document_id' })
 
     if (insertError) {
       throw new Error(insertError.message)
