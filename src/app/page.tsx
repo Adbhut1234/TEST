@@ -118,8 +118,8 @@ export default function Home() {
               <div className="p-3 bg-zinc-100 dark:bg-zinc-900 rounded-full mb-2">
                 <ShieldCheck className="h-8 w-8 text-green-500" />
               </div>
-              <h4 className="text-4xl font-extrabold">99%</h4>
-              <p className="font-medium text-zinc-600 dark:text-zinc-400">Extraction Accuracy</p>
+              <h4 className="text-4xl font-extrabold">95%+</h4>
+              <p className="font-medium text-zinc-600 dark:text-zinc-400">Targeted Accuracy</p>
             </div>
             <div className="flex flex-col items-center space-y-3">
               <div className="p-3 bg-zinc-100 dark:bg-zinc-900 rounded-full mb-2">
