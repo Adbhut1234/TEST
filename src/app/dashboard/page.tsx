@@ -106,7 +106,6 @@ export default function DashboardOverview() {
   }, [])
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
     <div className="space-y-8 max-w-7xl mx-auto pb-10">
       <div className="relative overflow-hidden rounded-3xl p-8 lg:p-10 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-primary/10 border border-white/20 dark:border-white/5 shadow-sm">
         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-primary/20 rounded-full blur-3xl mix-blend-multiply" />
