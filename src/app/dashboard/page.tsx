@@ -107,67 +107,86 @@ export default function DashboardOverview() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard Overview</h2>
-        <p className="text-muted-foreground mt-2">
-          Monitor your land record digitization pipeline and regional progress.
-        </p>
+    <div className="space-y-8 max-w-7xl mx-auto pb-10">
+      <div className="relative overflow-hidden rounded-3xl p-8 lg:p-10 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-primary/10 border border-white/20 dark:border-white/5 shadow-sm">
+        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-primary/20 rounded-full blur-3xl mix-blend-multiply" />
+        <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl mix-blend-multiply" />
+        <div className="relative z-10">
+          <h2 className="text-4xl lg:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-indigo-800 to-gray-900 dark:from-white dark:via-indigo-200 dark:to-white">
+            Dashboard Overview
+          </h2>
+          <p className="text-muted-foreground mt-4 text-lg lg:text-xl max-w-2xl leading-relaxed">
+            Monitor your land record digitization pipeline, track verification progress, and analyze regional data in real-time.
+          </p>
+        </div>
       </div>
       
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="group relative overflow-hidden border border-border/50 bg-background/50 backdrop-blur-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Total Documents</CardTitle>
+            <div className="p-2 bg-indigo-500/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
+              <FileText className="h-5 w-5 text-indigo-500" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             {loading ? (
-              <Skeleton className="h-8 w-[100px]" />
+              <Skeleton className="h-10 w-[100px]" />
             ) : (
-              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-4xl font-black tracking-tighter">{stats.total}</div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Verified Records</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
+        <Card className="group relative overflow-hidden border border-border/50 bg-background/50 backdrop-blur-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Verified Records</CardTitle>
+            <div className="p-2 bg-emerald-500/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
+              <CheckCircle className="h-5 w-5 text-emerald-500" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             {loading ? (
-              <Skeleton className="h-8 w-[100px]" />
+              <Skeleton className="h-10 w-[100px]" />
             ) : (
-              <div className="text-2xl font-bold text-green-600">{stats.verified}</div>
+              <div className="text-4xl font-black tracking-tighter text-emerald-600 dark:text-emerald-400">{stats.verified}</div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Review Required</CardTitle>
-            <Clock className="h-4 w-4 text-amber-500" />
+        <Card className="group relative overflow-hidden border border-border/50 bg-background/50 backdrop-blur-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Review Required</CardTitle>
+            <div className="p-2 bg-amber-500/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
+              <Clock className="h-5 w-5 text-amber-500" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             {loading ? (
-              <Skeleton className="h-8 w-[100px]" />
+              <Skeleton className="h-10 w-[100px]" />
             ) : (
-              <div className="text-2xl font-bold text-amber-500">{stats.reviewRequired}</div>
+              <div className="text-4xl font-black tracking-tighter text-amber-600 dark:text-amber-400">{stats.reviewRequired}</div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Failed Extractions</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
+        <Card className="group relative overflow-hidden border border-border/50 bg-background/50 backdrop-blur-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Failed Extractions</CardTitle>
+            <div className="p-2 bg-rose-500/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
+              <AlertTriangle className="h-5 w-5 text-rose-500" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             {loading ? (
-              <Skeleton className="h-8 w-[100px]" />
+              <Skeleton className="h-10 w-[100px]" />
             ) : (
-              <div className="text-2xl font-bold text-destructive">{stats.failed}</div>
+              <div className="text-4xl font-black tracking-tighter text-rose-600 dark:text-rose-400">{stats.failed}</div>
             )}
           </CardContent>
         </Card>
@@ -176,11 +195,11 @@ export default function DashboardOverview() {
       {/* Charts Row */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Pie Chart */}
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Pipeline Status</CardTitle>
+        <Card className="col-span-1 border border-border/50 bg-background/50 backdrop-blur-xl shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="border-b border-border/10">
+            <CardTitle className="text-lg font-bold">Pipeline Status</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[320px] pt-6">
             {loading ? (
               <Skeleton className="w-full h-full rounded-full" />
             ) : pieData.length > 0 ? (
@@ -190,21 +209,24 @@ export default function DashboardOverview() {
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
+                    innerRadius={70}
+                    outerRadius={95}
+                    paddingAngle={6}
                     dataKey="value"
+                    stroke="none"
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <RechartsTooltip />
-                  <Legend />
+                  <RechartsTooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} 
+                  />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
+              <div className="flex items-center justify-center h-full text-muted-foreground font-medium">
                 No data available
               </div>
             )}
@@ -212,34 +234,40 @@ export default function DashboardOverview() {
         </Card>
 
         {/* District Progress Bar Chart */}
-        <Card className="col-span-1 lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">District Progress</CardTitle>
+        <Card className="col-span-1 lg:col-span-1 border border-border/50 bg-background/50 backdrop-blur-xl shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="border-b border-border/10">
+            <CardTitle className="text-lg font-bold">District Progress</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[320px] pt-6">
              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={districtData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={80} />
-                  <RechartsTooltip cursor={{fill: 'transparent'}} />
-                  <Bar dataKey="records" fill="#6366f1" radius={[0, 4, 4, 0]} />
+                  <XAxis type="number" axisLine={false} tickLine={false} />
+                  <YAxis dataKey="name" type="category" width={80} axisLine={false} tickLine={false} fontWeight={500} />
+                  <RechartsTooltip 
+                    cursor={{fill: 'var(--muted)'}} 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Bar dataKey="records" fill="#6366f1" radius={[0, 6, 6, 0]} barSize={20} />
                 </BarChart>
               </ResponsiveContainer>
           </CardContent>
         </Card>
 
         {/* Field Error Rate Bar Chart */}
-        <Card className="col-span-1 lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Field Extraction Error Rate (%)</CardTitle>
+        <Card className="col-span-1 lg:col-span-1 border border-border/50 bg-background/50 backdrop-blur-xl shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="border-b border-border/10">
+            <CardTitle className="text-lg font-bold">Field Error Rate (%)</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[320px] pt-6">
              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={errorData}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <RechartsTooltip cursor={{fill: 'transparent'}} />
-                  <Bar dataKey="rate" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 500 }} />
+                  <YAxis axisLine={false} tickLine={false} />
+                  <RechartsTooltip 
+                    cursor={{fill: 'var(--muted)'}} 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Bar dataKey="rate" fill="#f43f5e" radius={[6, 6, 0, 0]} barSize={30} />
                 </BarChart>
               </ResponsiveContainer>
           </CardContent>
