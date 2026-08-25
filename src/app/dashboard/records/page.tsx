@@ -143,8 +143,8 @@ export default function VerifiedRecordsList() {
                     <Badge className="bg-green-500">Verified</Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/verification/${record.document_id}`}>
-                      <Button size="sm" variant="outline">View Data</Button>
+                    <Link href={`/dashboard/verification/${record.document_id}`}>
+                      <Button variant="outline" size="sm">View Data</Button>
                     </Link>
                   </TableCell>
                 </TableRow>
