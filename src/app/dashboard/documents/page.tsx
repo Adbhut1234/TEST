@@ -133,13 +133,13 @@ export default function DocumentsList() {
                   <TableCell>{doc.source_type}</TableCell>
                   <TableCell>{getStatusBadge(doc.processing_status)}</TableCell>
                   <TableCell className="text-right flex items-center justify-end gap-2">
-                    {doc.processing_status === 'REVIEW_REQUIRED' ? (
+                    {['REVIEW_REQUIRED', 'VERIFIED'].includes(doc.processing_status) ? (
                       <Link href={`/dashboard/verification/${doc.id}`}>
-                        <Button size="sm">Verify</Button>
+                        <Button size="sm">{doc.processing_status === 'VERIFIED' ? 'View Data' : 'Verify'}</Button>
                       </Link>
                     ) : (
                       <Link href={`/dashboard/documents/${doc.id}`}>
-                        <Button size="sm" variant="outline">View</Button>
+                        <Button size="sm" variant="outline">{doc.processing_status === 'FAILED' ? 'Retry' : 'Process'}</Button>
                       </Link>
                     )}
                     <Button 
