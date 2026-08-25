@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { normalizeString, parseArea } from '@/lib/validation'
 
 // Initialize Supabase Client (For server-side, it's safe to use env vars directly)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
     // Update status to EXTRACTING
     await userSupabase.from('documents').update({ processing_status: 'EXTRACTING' }).eq('id', documentId)
 
-    // 2. Download the file from Supabase Storage
+    // Download the file from Supabase Storage
     const { data: fileBlob, error: downloadError } = await userSupabase.storage
       .from('land-records')
       .download(document.storage_path)
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(arrayBuffer)
     const base64Data = buffer.toString('base64')
 
-    // 3. Call Gemini API
+    // 3. Call Gemini API (with Retry Logic)
     const model = genAI.getGenerativeModel({
       model: "gemini-flash-latest",
       generationConfig: { responseMimeType: "application/json" }
@@ -109,14 +110,25 @@ If a field is unreadable, set its value to null. Do not invent information.`
       }
     ]
 
-    const result = await model.generateContent([prompt, ...imageParts])
-    const text = result.response.text()
-    
+    let text = ''
     let extractedData = {}
-    try {
-      extractedData = JSON.parse(text)
-    } catch {
-      throw new Error('Gemini did not return valid JSON')
+    let attempt = 0
+    let success = false
+    const maxRetries = 3
+
+    while (attempt < maxRetries && !success) {
+      try {
+        const result = await model.generateContent([prompt, ...imageParts])
+        text = result.response.text()
+        extractedData = JSON.parse(text)
+        success = true
+      } catch (err) {
+        attempt++
+        if (attempt >= maxRetries) {
+          throw new Error(`Gemini API failed after ${maxRetries} attempts: ${err instanceof Error ? err.message : 'Unknown'}`)
+        }
+        await new Promise(res => setTimeout(res, 1000 * attempt)) // Exponential-ish backoff
+      }
     }
 
     // --- REAL FRAUD & VALIDATION LOGIC ---
@@ -126,7 +138,7 @@ If a field is unreadable, set its value to null. Do not invent information.`
     const oName = (extractedData as Record<string, any>).owner_name?.value
     const kNumber = (extractedData as Record<string, any>).khasra_number?.value
     const lAreaStr = (extractedData as Record<string, any>).plot_area?.value
-    const lArea = lAreaStr ? parseFloat(lAreaStr) : NaN
+    const lArea = parseArea(lAreaStr)
     const vName = (extractedData as Record<string, any>).village?.value
 
     // Missing field checks
@@ -157,8 +169,11 @@ If a field is unreadable, set its value to null. Do not invent information.`
         .maybeSingle()
 
       if (lrmsRecord) {
-        // 1. Owner Name Fuzzy Match (simple match for MVP)
-        if (oName && lrmsRecord.owner_name && !lrmsRecord.owner_name.toLowerCase().includes(oName.toLowerCase().split(' ')[0])) {
+        // 1. Owner Name Phonetic/Fuzzy Match (Normalized)
+        const normOName = normalizeString(oName)
+        const normLRMSName = normalizeString(lrmsRecord.owner_name)
+        
+        if (normOName && normLRMSName && !normLRMSName.includes(normOName) && !normOName.includes(normLRMSName)) {
           validationFlags.push({
             type: 'WARNING',
             message: `Owner name mismatch. LRMS shows: ${lrmsRecord.owner_name}`
@@ -166,10 +181,12 @@ If a field is unreadable, set its value to null. Do not invent information.`
           confidenceScore -= 0.1
         }
         
-        // 2. Area Mismatch
-        if (!isNaN(lArea) && lrmsRecord.plot_area) {
-          const lrmsArea = parseFloat(lrmsRecord.plot_area)
-          if (Math.abs(lArea - lrmsArea) > 0.05) {
+        // 2. Area Mismatch (Normalized)
+        const lrmsArea = parseArea(lrmsRecord.plot_area)
+        if (!isNaN(lArea) && !isNaN(lrmsArea)) {
+          // Allow 5% margin of error due to rounding / historical conversions
+          const diff = Math.abs(lArea - lrmsArea)
+          if (diff > (lrmsArea * 0.05)) {
              validationFlags.push({
                type: 'CRITICAL',
                message: `Area mismatch. LRMS shows: ${lrmsRecord.plot_area}`
@@ -186,17 +203,15 @@ If a field is unreadable, set its value to null. Do not invent information.`
       }
     }
 
-    // Duplicate detection (query land_records)
+    // Duplicate detection (query land_records using JSONB exact match)
     if (kNumber && vName) {
-      const { data: verifiedRecords } = await userSupabase
+      const { data: duplicate } = await userSupabase
         .from('land_records')
-        .select('id, verified_data')
+        .select('id')
         .eq('is_verified', true)
-        
-      const duplicate = verifiedRecords?.find(r => 
-        r.verified_data?.khasra_number == kNumber && 
-        r.verified_data?.village == vName
-      )
+        .eq('verified_data->khasra_number', `"${kNumber}"`)
+        .eq('verified_data->village', `"${vName}"`)
+        .maybeSingle()
 
       if (duplicate) {
         validationFlags.push({

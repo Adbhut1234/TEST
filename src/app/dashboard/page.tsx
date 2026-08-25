@@ -20,20 +20,8 @@ export default function DashboardOverview() {
   const [pieData, setPieData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Mock data for District Progress and Error Rates (as requested for MVP)
-  const districtData = [
-    { name: 'Lucknow', records: 40 },
-    { name: 'Patna', records: 25 },
-    { name: 'Bhopal', records: 18 },
-    { name: 'Raipur', records: 12 },
-  ]
-
-  const errorData = [
-    { name: 'Owner', rate: 12 },
-    { name: 'Khasra', rate: 8 },
-    { name: 'Area', rate: 15 },
-    { name: 'Tehsil', rate: 20 },
-  ]
+  const [districtData, setDistrictData] = useState<any[]>([])
+  const [errorData, setErrorData] = useState<any[]>([])
 
   useEffect(() => {
     async function fetchStats() {
@@ -61,6 +49,51 @@ export default function DashboardOverview() {
           { name: 'Extracting', value: extracting },
           { name: 'Failed', value: failed }
         ].filter(d => d.value > 0))
+
+        // Dynamic Aggregation for Districts and Errors
+        const { data: recordsData } = await supabase.from('land_records').select('extracted_data, verified_data, is_verified')
+        
+        const dCount: Record<string, number> = {}
+        const errCount: Record<string, { total: number, lowConf: number }> = {}
+
+        if (recordsData) {
+          recordsData.forEach(r => {
+            // Aggregate Districts
+            const district = r.is_verified ? r.verified_data?.district : r.extracted_data?.district?.value
+            if (district && district !== 'null') {
+              dCount[district] = (dCount[district] || 0) + 1
+            }
+
+            // Aggregate Error Rates (< 85% confidence)
+            if (!r.is_verified && r.extracted_data) {
+               Object.keys(r.extracted_data).forEach(field => {
+                 if (field === 'raw_text_layer') return
+                 const conf = r.extracted_data[field]?.confidence
+                 if (conf !== undefined) {
+                   if (!errCount[field]) errCount[field] = { total: 0, lowConf: 0 }
+                   errCount[field].total += 1
+                   if (conf < 0.85) errCount[field].lowConf += 1
+                 }
+               })
+            }
+          })
+        }
+
+        const sortedDistricts = Object.keys(dCount)
+          .map(k => ({ name: k.substring(0,10), records: dCount[k] }))
+          .sort((a,b) => b.records - a.records)
+          .slice(0, 5)
+
+        const sortedErrors = Object.keys(errCount)
+          .map(k => ({ 
+             name: k.replace(/_/g, ' ').substring(0,8), 
+             rate: Math.round((errCount[k].lowConf / errCount[k].total) * 100) 
+          }))
+          .sort((a,b) => b.rate - a.rate)
+          .slice(0, 5)
+
+        setDistrictData(sortedDistricts)
+        setErrorData(sortedErrors)
 
       } catch (err) {
         console.error('Failed to fetch stats:', err)
