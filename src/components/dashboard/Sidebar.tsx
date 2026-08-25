@@ -16,7 +16,7 @@ export function Sidebar() {
     },
     {
       title: 'Upload Document',
-      href: '/documents/new',
+      href: '/dashboard/documents/new',
       icon: Upload,
     },
     {

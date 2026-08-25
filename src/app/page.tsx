@@ -16,7 +16,7 @@ export default function Home() {
           <Link className="text-sm font-medium hover:text-indigo-600 transition-colors" href="/dashboard">
             Dashboard
           </Link>
-          <Link href="/documents/new">
+          <Link href="/dashboard/documents/new">
             <Button className="rounded-full shadow-md bg-indigo-600 hover:bg-indigo-700 text-white border-0">
               Try Live Demo
             </Button>
@@ -48,7 +48,7 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 mt-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-            <Link href="/documents/new">
+            <Link href="/dashboard/documents/new">
               <Button size="lg" className="h-14 px-8 text-base rounded-full shadow-lg hover:shadow-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all hover:-translate-y-1 w-full sm:w-auto">
                 Upload Document <ArrowRight className="ml-2 h-5 w-5" />
               </Button>

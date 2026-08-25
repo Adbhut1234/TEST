@@ -11,6 +11,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { Skeleton } from '@/components/ui/skeleton'
 
+const fieldLabels: Record<string, string> = {
+  owner_name: "Owner Name",
+  father_or_spouse_name: "Father/Spouse Name",
+  khasra_number: "Khasra Number",
+  khata_number: "Khata Number",
+  survey_number: "Survey Number",
+  plot_area: "Plot Area",
+  area_unit: "Area Unit",
+  village: "Village",
+  tehsil: "Tehsil",
+  district: "District",
+  land_classification: "Land Classification",
+  mutation_number: "Mutation Number",
+  registration_date: "Registration Date"
+}
+
 export default function VerificationPage() {
   const params = useParams()
   const router = useRouter()
@@ -18,12 +34,7 @@ export default function VerificationPage() {
 
   const [document, setDocument] = useState<any>(null)
   const [record, setRecord] = useState<any>(null)
-  const [formData, setFormData] = useState<any>({
-    owner_name: '',
-    khasra_number: '',
-    land_area: '',
-    village: ''
-  })
+  const [formData, setFormData] = useState<Record<string, string>>({})
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -45,11 +56,15 @@ export default function VerificationPage() {
         if (docError) throw docError
         setDocument(docData)
 
-        // Fetch file URL
-        const { data: fileData } = supabase.storage
+        // Fetch file URL securely using Signed URL
+        const { data: fileData, error: signedUrlError } = await supabase.storage
           .from('land-records')
-          .getPublicUrl(docData.storage_path)
-        setFileUrl(fileData.publicUrl)
+          .createSignedUrl(docData.storage_path, 60 * 10) // 10 minutes
+
+        if (signedUrlError) {
+          console.error('Error generating signed URL:', signedUrlError)
+        }
+        setFileUrl(fileData?.signedUrl || null)
 
         // 2. Fetch land record
         const { data: recordData, error: recordError } = await supabase
@@ -64,13 +79,18 @@ export default function VerificationPage() {
 
         if (recordData) {
           setRecord(recordData)
-          const dataToUse = recordData.verified_data || recordData.extracted_data || {}
-          setFormData({
-            owner_name: dataToUse.owner_name || '',
-            khasra_number: dataToUse.khasra_number || '',
-            land_area: dataToUse.land_area || '',
-            village: dataToUse.village || ''
+          const isVerified = recordData.is_verified;
+          const dataToUse = isVerified ? (recordData.verified_data || {}) : (recordData.extracted_data || {})
+          
+          const initialFormData: Record<string, string> = {}
+          Object.keys(fieldLabels).forEach(f => {
+            if (isVerified) {
+              initialFormData[f] = dataToUse[f] || ''
+            } else {
+              initialFormData[f] = dataToUse[f]?.value || ''
+            }
           })
+          setFormData(initialFormData)
         }
       } catch (error) {
         console.error('Error loading verification data:', error)
@@ -92,18 +112,19 @@ export default function VerificationPage() {
       const actorId = session?.user?.id
 
       const auditEvents = []
-      const oldData = record.verified_data || record.extracted_data || {}
       
-      // Check each field for corrections
-      const fields = ['owner_name', 'khasra_number', 'land_area', 'village']
+      // Check each field for corrections against original extracted value
+      const fields = Object.keys(fieldLabels)
       for (const field of fields) {
-        if (oldData[field] !== formData[field]) {
+        const oldVal = record.extracted_data?.[field]?.value || ''
+        const newVal = formData[field] || ''
+        if (oldVal !== newVal) {
           auditEvents.push({
             land_record_id: record.id,
             actor_id: actorId,
             field_name: field,
-            old_value: oldData[field] || '',
-            new_value: formData[field] || '',
+            old_value: String(oldVal),
+            new_value: String(newVal),
             action: 'CORRECTION'
           })
         }
@@ -119,7 +140,7 @@ export default function VerificationPage() {
         action: 'APPROVE'
       })
 
-      // Update land_records
+      // Update land_records (Flattening the formData to save simple strings)
       const { error: recordError } = await supabase
         .from('land_records')
         .update({
@@ -193,165 +214,162 @@ export default function VerificationPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Skeleton className="h-12 w-12 rounded-full" />
-          <p className="text-muted-foreground animate-pulse">Loading document data...</p>
+      <div className="container mx-auto py-10 space-y-6">
+        <Skeleton className="h-10 w-[200px]" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <Skeleton className="h-[600px] w-full" />
+          <Skeleton className="h-[600px] w-full" />
         </div>
       </div>
     )
   }
 
-  if (!document || !record) {
+  if (!document) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-destructive font-semibold">Document or Record not found.</p>
+      <div className="container mx-auto py-20 text-center">
+        <h1 className="text-2xl font-bold mb-4">Document Not Found</h1>
+        <Link href="/dashboard">
+          <Button variant="outline">Return to Dashboard</Button>
+        </Link>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-muted/20">
-      {/* Header */}
-      <header className="h-16 flex items-center justify-between px-6 border-b bg-background">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/documents">
+    <div className="container mx-auto py-6 space-y-6 max-w-7xl">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Link href="/dashboard">
             <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
-            <h1 className="font-semibold text-lg">Officer Verification</h1>
-            <p className="text-sm text-muted-foreground">ID: {documentId}</p>
+            <h1 className="text-2xl font-bold tracking-tight">Verify Extraction</h1>
+            <p className="text-muted-foreground text-sm">
+              {document.filename} • {new Date(document.uploaded_at).toLocaleString()}
+            </p>
           </div>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => router.push('/dashboard/documents')}>
-            Cancel
-          </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={deleting || saving}>
-            {deleting ? 'Deleting...' : (
-              <>
-                <Trash2 className="mr-2 h-4 w-4" /> Delete
-              </>
-            )}
-          </Button>
-          <Button onClick={handleVerify} disabled={saving || deleting} className="bg-green-600 hover:bg-green-700">
-            {saving ? 'Saving...' : (
-              <>
-                <CheckCircle2 className="mr-2 h-4 w-4" /> Approve & Verify
-              </>
-            )}
-          </Button>
-        </div>
-      </header>
-
-      {/* Split Pane */}
-      <main className="flex-1 flex overflow-hidden">
-        
-        {/* Left Side: Document Viewer */}
-        <section className="w-1/2 h-full border-r bg-zinc-100 dark:bg-zinc-900 p-4 relative">
-          {fileUrl ? (
-            <div className="w-full h-full rounded-md overflow-hidden border bg-white shadow-sm">
-              {document.source_type?.includes('pdf') ? (
-                <iframe src={`${fileUrl}#toolbar=0`} className="w-full h-full" title="Document Viewer" />
-              ) : document.source_type?.includes('image') ? (
-                <img src={fileUrl} alt="Document" className="w-full h-full object-contain" />
-              ) : (
-                <iframe src={fileUrl} className="w-full h-full" title="Document Viewer" />
-              )}
+        <div className="flex items-center space-x-2">
+          {!record?.is_verified && (
+             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+               <Trash2 className="h-4 w-4 mr-2" />
+               {deleting ? 'Deleting...' : 'Delete'}
+             </Button>
+          )}
+          {record?.is_verified ? (
+            <div className="flex items-center text-green-600 bg-green-50 px-4 py-2 rounded-md font-medium border border-green-200">
+              <CheckCircle2 className="h-5 w-5 mr-2" />
+              Verified
             </div>
           ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              No preview available
-            </div>
+            <Button onClick={handleVerify} disabled={saving} className="bg-primary text-primary-foreground">
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? 'Saving...' : 'Confirm & Verify'}
+            </Button>
           )}
-        </section>
+        </div>
+      </div>
 
-        {/* Right Side: Extraction Form */}
-        <section className="w-1/2 h-full overflow-y-auto p-8 bg-background">
-          <Card className="shadow-none border-none">
-            <CardHeader className="px-0">
-              <CardTitle className="text-2xl">Extracted Data</CardTitle>
-              <p className="text-muted-foreground">
-                Please review the AI-extracted information against the original document on the left. Correct any mistakes before verifying.
-              </p>
-            </CardHeader>
-            <CardContent className="px-0 space-y-6 mt-4">
-              
-              {/* Fraud Detection Banners */}
-              {record.validation_flags && record.validation_flags.length > 0 && (
-                <div className="space-y-3 mb-6">
-                  {record.validation_flags.map((flag: any, index: number) => (
-                    <div 
-                      key={index} 
-                      className={`p-4 rounded-md border flex items-start gap-3 ${
-                        flag.type === 'CRITICAL' 
-                          ? 'bg-red-50 border-red-200 text-red-900 dark:bg-red-950/50 dark:border-red-900 dark:text-red-200' 
-                          : 'bg-yellow-50 border-yellow-200 text-yellow-900 dark:bg-yellow-950/50 dark:border-yellow-900 dark:text-yellow-200'
-                      }`}
-                    >
-                      <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
-                      <div>
-                        <h4 className="font-semibold text-sm">
-                          {flag.type === 'CRITICAL' ? 'Critical Alert' : 'System Warning'}
-                        </h4>
-                        <p className="text-sm mt-1">{flag.message}</p>
-                      </div>
+      {record?.validation_flags && record.validation_flags.length > 0 && (
+        <Card className="border-destructive bg-destructive/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-destructive text-lg flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              Validation Warnings Detected
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc list-inside space-y-1 text-sm text-destructive/90">
+              {record.validation_flags.map((flag: any, i: number) => (
+                <li key={i}>
+                  <strong>{flag.type}:</strong> {flag.message}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-200px)] min-h-[600px]">
+        {/* Original Document Preview */}
+        <Card className="h-full flex flex-col overflow-hidden">
+          <CardHeader className="py-4 border-b bg-muted/30">
+            <CardTitle className="text-lg">Original Document</CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 p-0 bg-muted/10 relative">
+            {fileUrl ? (
+              document.source_type?.includes('pdf') ? (
+                <iframe src={fileUrl} className="w-full h-full border-0" />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={fileUrl} alt="Land Record" className="w-full h-full object-contain" />
+              )
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                Document preview not available
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Extracted Data Form */}
+        <Card className="h-full flex flex-col overflow-hidden">
+          <CardHeader className="py-4 border-b bg-muted/30 flex-row items-center justify-between">
+            <CardTitle className="text-lg">Extracted Data</CardTitle>
+            {record?.confidence_score !== undefined && (
+              <span className="text-sm font-medium px-2 py-1 bg-primary/10 text-primary rounded-md">
+                Overall Confidence: {(record.confidence_score * 100).toFixed(0)}%
+              </span>
+            )}
+          </CardHeader>
+          <CardContent className="flex-1 overflow-y-auto p-6">
+            {!record ? (
+              <div className="text-center text-muted-foreground py-10">
+                Data extraction is still in progress...
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Object.keys(fieldLabels).map((key) => {
+                  const confidence = record?.extracted_data?.[key]?.confidence
+                  let borderColor = ""
+                  if (!record?.is_verified && confidence !== undefined) {
+                    if (confidence > 0.85) borderColor = "border-green-500 focus-visible:ring-green-500"
+                    else if (confidence >= 0.60) borderColor = "border-yellow-500 focus-visible:ring-yellow-500"
+                    else borderColor = "border-red-500 focus-visible:ring-red-500"
+                  }
+
+                  return (
+                    <div key={key} className="space-y-2">
+                      <Label htmlFor={key} className="flex justify-between items-center text-xs font-medium">
+                        {fieldLabels[key]}
+                        {!record?.is_verified && confidence !== undefined && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-sm bg-background border ${
+                            confidence > 0.85 ? 'text-green-600 border-green-200' : 
+                            confidence >= 0.60 ? 'text-yellow-600 border-yellow-200' : 
+                            'text-red-600 border-red-200'
+                          }`}>
+                            {(confidence * 100).toFixed(0)}%
+                          </span>
+                        )}
+                      </Label>
+                      <Input
+                        id={key}
+                        value={formData[key] || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, [key]: e.target.value }))}
+                        disabled={record?.is_verified}
+                        className={borderColor}
+                        placeholder={`Enter ${fieldLabels[key].toLowerCase()}`}
+                      />
                     </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="grid gap-3">
-                <Label htmlFor="owner_name" className="text-base font-semibold">Owner Name</Label>
-                <Input 
-                  id="owner_name"
-                  value={formData.owner_name}
-                  onChange={(e) => setFormData({...formData, owner_name: e.target.value})}
-                  className="h-12 bg-muted/50"
-                  placeholder="e.g. Rajesh Kumar Sharma"
-                />
+                  )
+                })}
               </div>
-
-              <div className="grid gap-3">
-                <Label htmlFor="khasra_number" className="text-base font-semibold">Khasra Number</Label>
-                <Input 
-                  id="khasra_number"
-                  value={formData.khasra_number}
-                  onChange={(e) => setFormData({...formData, khasra_number: e.target.value})}
-                  className="h-12 bg-muted/50"
-                  placeholder="e.g. 452/1"
-                />
-              </div>
-
-              <div className="grid gap-3">
-                <Label htmlFor="land_area" className="text-base font-semibold">Land Area</Label>
-                <Input 
-                  id="land_area"
-                  value={formData.land_area}
-                  onChange={(e) => setFormData({...formData, land_area: e.target.value})}
-                  className="h-12 bg-muted/50"
-                  placeholder="e.g. 1.5 Hectares"
-                />
-              </div>
-
-              <div className="grid gap-3">
-                <Label htmlFor="village" className="text-base font-semibold">Village / Location</Label>
-                <Input 
-                  id="village"
-                  value={formData.village}
-                  onChange={(e) => setFormData({...formData, village: e.target.value})}
-                  className="h-12 bg-muted/50"
-                  placeholder="e.g. Rampur"
-                />
-              </div>
-
-            </CardContent>
-          </Card>
-        </section>
-        
-      </main>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
